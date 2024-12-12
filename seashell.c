@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 #define CYAN "\033[36m"
 #define YELL "\033[33m"
@@ -12,6 +15,12 @@
 #define BUFSIZE 1024
 #define TOK_BUFSIZE 64
 #define TOK_DELIMS " \t\r\n\a"
+
+char *builtins[] = {
+    "cd",
+    "help",
+    "exit"
+};
 
 void die(const char *error) 
 {
@@ -58,7 +67,7 @@ char **tokCmd(char *cmd)
     }
 
     char *token = strtok(cmd, TOK_DELIMS);
-    while (!token) {
+    while (token != NULL) {
         tokens[pos++] = token;
 
         if (pos >= bufsize) {
@@ -76,30 +85,66 @@ char **tokCmd(char *cmd)
     return tokens;
 }
 
-void execCmd(char **args)
+int execCmd(char **args)
 {
+    pid_t pid, wpid;
+    int status;
+    pid = fork();
+    
+    if (pid == 0) {
+        if (-1 == execvp(args[0], args)) {
+            die("seashell");
+        }
+    } else if (pid < 0) {
+        die("seashell");
+    } else {
+        do {
+            wpid = waitpid(pid, &status, WUNTRACED);
+        } while (!WIFEXITED(status) && !WIFSIGNALED(status));
+    }
 
+    return 1;
+}
+
+int cdFn(char **args)
+{
+    if (args[1] == NULL) {
+        fprintf(stderr, RED "seashell: no arguments given to \"cd\"\n" RESET);
+    } else {
+        if (0 != chdir(args[1])) {
+            perror("seashell");
+        }
+    }
+    return 1;
 }
 
 void loop()
 {
     char *cmd;
     char **args;
-    int status = 1;
+    int status;
 
     do {
-        printf(CYAN BOLD "> " RESET);
+        printf(CYAN BOLD ">> " RESET);
 
         cmd = readCmd();
         args = tokCmd(cmd);
-        status = execCmd(args);
 
+        if (!strcmp(args[0], "exit")) {
+            exit(0);
+        } else if (!strcmp(args[0], "cd")) {
+            status = cdFn(args);
+        } else {
+            status = execCmd(args);
+        }
+
+        free(cmd);
+        free(args);
     } while(status);
 }
 
 int main(int argc, char **argv)
 {
     loop();
-
     return 0;
 }
