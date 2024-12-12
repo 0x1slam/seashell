@@ -6,7 +6,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define CYAN "\033[36m"
+#define CYAN "\033[96m"
+#define GREY "\033[90m"
 #define YELL "\033[33m"
 #define RED "\033[31m"
 #define RESET "\033[0m"
@@ -112,6 +113,16 @@ int cdFn(char **args)
     return 1;
 }
 
+void printPrompt()
+{
+    char cwd[BUFSIZE];
+    if (NULL != getcwd(cwd, sizeof(cwd))) {
+        printf(BOLD GREY "%s " CYAN ">> " RESET);
+    } else {
+        die("getwcd");
+    }
+}
+
 void loop()
 {
     char *cmd;
@@ -119,7 +130,7 @@ void loop()
     int status;
 
     do {
-        printf(CYAN BOLD ">> " RESET);
+        printPrompt();
 
         cmd = readCmd();
         args = tokCmd(cmd);
