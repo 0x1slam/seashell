@@ -7,12 +7,12 @@ Seashell is a minimalistic Unix-like shell written in C. It helps you run comman
 - **Interactive Mode**: Provides a prompt for user input
 - **Error Handling**: Displays meaningful error messages
 
-## Requirements
+## Requirements:
 - GCC (GNU Compiler Collection)
 - `make` tool
 - Unix-like Operating System
 
-## Installation
+## Installation:
 1. Clone the repository:
     ```sh
     git clone https://github.com/yourusername/seashell.git
