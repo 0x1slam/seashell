@@ -1,42 +1,105 @@
-#include <string.h>
+#include <errno.h>
 #include <stdio.h>
-#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
 
-int typeFn(const char *path) 
+#define CYAN "\033[36m"
+#define YELL "\033[33m"
+#define RED "\033[31m"
+#define RESET "\033[0m"
+#define BOLD "\033[1m"
+
+#define BUFSIZE 1024
+#define TOK_BUFSIZE 64
+#define TOK_DELIMS " \t\r\n\a"
+
+void die(const char *error) 
 {
-    if (access(path, F_OK) == 0) 
-        return 1;
-    return 0;
+    fprintf(stderr, RED);
+    perror(error);
+    fprintf(stderr, RESET);
+    exit(1);
 }
 
-int main()
+char *readCmd(void)
 {
-    char input[100];
-    
+    int bufsize = BUFSIZE;
+    char *buf = malloc(sizeof(char) * bufsize);
+    if (!buf) {
+        die("malloc");
+    }
+
+    int c, pos = 0;
     while (1) {
-        printf("$ ");
-        fflush(stdout);
-        
-        fgets(input, 100, stdin);
-        input[strlen(input) - 1] = '\0';
-        
-        if (!strcmp(input, "exit")) { 
-            return 0;
-        } else if (!strncmp(input, "echo", 4)) {
-            printf("%s\n", &input[5]);
-        } else if (!strncmp(input, "type", 4)) {
-            char path[200];
-            snprintf(path, sizeof(path), "/usr/bin/%s", &input[5]);
-            if (typeFn(path)) {
-                printf("%s is /usr/bin/%s\n", &input[5], &input[5]);
-            } else {
-                printf("%s: command not found\n", &input[5]);
-            }
-        } else if (strlen(input) == 0) {
-            continue;
+        c = getchar();
+        if (c == EOF || c == '\n') {
+            buf[pos] = '\0';
+            return buf;
         } else {
-            printf("%s: command not found\n", input);
+            buf[pos++] = c;
+        }
+
+        if (pos >= bufsize) {
+            bufsize += BUFSIZE;
+            buf = realloc(buf, bufsize);
+            if (!buf) {
+                die("malloc");
+            }
         }
     }
+}
+
+char **tokCmd(char *cmd)
+{
+    int bufsize = TOK_BUFSIZE, pos = 0;
+    char **tokens = malloc(sizeof(char*) * bufsize);
+    if (!tokens) {
+        die("malloc");
+    }
+
+    char *token = strtok(cmd, TOK_DELIMS);
+    while (!token) {
+        tokens[pos++] = token;
+
+        if (pos >= bufsize) {
+            bufsize += TOK_BUFSIZE;
+            tokens = realloc(tokens, sizeof(char*) * bufsize);
+            if (!tokens) {
+                die("malloc");
+            }
+        }
+
+        token = strtok(NULL, TOK_DELIMS);
+    }
+
+    tokens[pos] = NULL;
+    return tokens;
+}
+
+void execCmd(char **args)
+{
+
+}
+
+void loop()
+{
+    char *cmd;
+    char **args;
+    int status = 1;
+
+    do {
+        printf(CYAN BOLD "> " RESET);
+
+        cmd = readCmd();
+        args = tokCmd(cmd);
+        status = execCmd(args);
+
+    } while(status);
+}
+
+int main(int argc, char **argv)
+{
+    loop();
+
     return 0;
 }
