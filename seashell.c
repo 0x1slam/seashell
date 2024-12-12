@@ -16,12 +16,6 @@
 #define TOK_BUFSIZE 64
 #define TOK_DELIMS " \t\r\n\a"
 
-char *builtins[] = {
-    "cd",
-    "help",
-    "exit"
-};
-
 void die(const char *error) 
 {
     fprintf(stderr, RED);
@@ -130,9 +124,9 @@ void loop()
         cmd = readCmd();
         args = tokCmd(cmd);
 
-        if (!strcmp(args[0], "exit")) {
+        if (args[0] != NULL && !strcmp(args[0], "exit")) {
             exit(0);
-        } else if (!strcmp(args[0], "cd")) {
+        } else if (args[0] != NULL && !strcmp(args[0], "cd")) {
             status = cdFn(args);
         } else {
             status = execCmd(args);
