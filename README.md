@@ -30,5 +30,5 @@ To start the shell, simply run:
 ```
 
 ## To Do?
-- [ ] **Better Command Prompt**
-- [ ] **More built-in Commands** 
+- [x] **Better Command Prompt**
+- [ ] **A config file for command prompt and aliasing commands** 
